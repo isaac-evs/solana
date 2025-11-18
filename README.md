@@ -4,12 +4,12 @@ Modern desktop application for IPFS uploads and Solana blockchain transactions. 
 
 ## Features
 
-- **🔐 Secure Login** - Auto-generated credentials with readable usernames (e.g., "swiftpanda247")
-- **📤 IPFS Upload** - Upload files to IPFS with validation
-- **📦 Zip Downloads** - Downloads automatically zipped
-- **⛓️ Solana Integration** - Register CIDs on blockchain
-- **🎨 Professional UI** - Polished UI design with Inter font
-- **🛡️ Security** - bcrypt passwords, rate limiting, session management, input validation
+- **Secure Login** - Auto-generated credentials with readable usernames (e.g., "swiftpanda247")
+- **IPFS Upload** - Upload files to IPFS with validation
+- **Zip Downloads** - Downloads automatically zipped
+- **Solana Integration** - Register CIDs on blockchain
+- **Professional UI** - Polished UI design with Inter font
+- **Security** - bcrypt passwords, rate limiting, session management, input validation
 
 ## Quick Start
 
@@ -40,13 +40,11 @@ ipfs daemon
 4. **First-Time Login**
    
    On first launch, the app will:
-   - Generate a secure random username (e.g., "bravewolf421")
+   - Generate a secure random username
    - Generate a strong 20-character random password
    - Display them **ONCE** in a modal dialog
-   - **⚠️ SAVE THESE CREDENTIALS IMMEDIATELY!**
    
    **No backup file is created** - this is intentional for security.
-   Click the fields to copy them to clipboard.
    
    **If you lose your credentials:**
    
@@ -55,7 +53,7 @@ ipfs daemon
    ./run.sh  # Will generate new credentials
    ```
    
-   ⚠️ **WARNING**: This permanently deletes all user data. No recovery possible.
+   **WARNING**: This permanently deletes all user data. No recovery possible.
 
 ## Architecture
 
@@ -78,15 +76,15 @@ src-tauri/        # Tauri desktop wrapper
 
 ## Security Features
 
-- **🔒 Strong Password Hashing**: bcrypt with 12 rounds (not reversible)
-- **🎲 Random Credentials**: Auto-generated on first launch for maximum security
-- **🚫 Rate Limiting**: 5 failed login attempts = 15 minute lockout
-- **⏱️ Session Management**: 24-hour token expiration
-- **🧹 Memory Clearing**: Private keys cleared after use
-- **📝 Input Validation**: File size limits (100MB), extension whitelist, path traversal protection
-- **🌐 CORS Protection**: Only localhost origins allowed
-- **🔐 CSP Headers**: Content Security Policy configured
-- **🚷 No Password Recovery**: Lost credentials require app reset (like crypto wallets)
+- **Strong Password Hashing**: bcrypt with 12 rounds (not reversible)
+- **Random Credentials**: Auto-generated on first launch for maximum security
+- **Rate Limiting**: 5 failed login attempts = 15 minute lockout
+- **Session Management**: 24-hour token expiration
+- **Memory Clearing**: Private keys cleared after use
+- **Input Validation**: File size limits (100MB), extension whitelist, path traversal protection
+- **CORS Protection**: Only localhost origins allowed
+- **CSP Headers**: Content Security Policy configured
+- **No Password Recovery**: Lost credentials require app reset
 
 ### Why This Security Model?
 
@@ -99,32 +97,34 @@ This is a **local desktop application**, not a web service:
 
 ### Security Trade-offs
 
-✅ **Pros:**
+**Pros:**
 - Strongest possible passwords (20+ random characters)
 - No password reuse risk
 - No brute-force attacks (rate limiting)
 - Credentials never transmitted over network
 - **No recovery backdoor** to exploit
 
-⚠️ **Cons:**
+**Cons:**
 - User must save credentials externally
-- Lost credentials = nuclear reset required
+- Lost credentials = reset required
 - No account recovery mechanism
 
 This is intentional - **security over convenience** for crypto operations.
-Think of it like a hardware wallet: lose your seed phrase = start over.
 
 ### Security Assumptions
 
 This application assumes:
-- ✅ You have legitimate physical access to this machine
-- ✅ Your operating system is secured (password, encryption)
-- ✅ You protect your Solana private keys externally
-- ⚠️ **Physical security is YOUR responsibility**
+- You have legitimate physical access to this machine
+- Your operating system is secured (password, encryption)
+- You protect your Solana private keys externally
+- **Physical security is YOUR responsibility**
 
-**If laptop is stolen:** Attacker with physical access can reset the app.
+**If laptop is stolen:** Attacker with physical access could reset the app.
 Your real security is protecting private keys in a hardware wallet or password manager.
-The app is a **secure tool**, not a **vault** - the vault is your OS encryption.
+
+## Schreenshot
+
+![Solana App Image](screenshot.png)
 
 ## Development
 
