@@ -1,0 +1,462 @@
+/* Global Styles and Variables */
+
+:root {
+    --primary-color: #0078D4;
+    --secondary-color: #107C10;
+    --danger-color: #D13438;
+    --success-color: #107C10;
+    --warning-color: #FF8C00;
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F3F2F1;
+    --bg-card: #FAFAFA;
+    --text-primary: #323130;
+    --text-secondary: #605E5C;
+    --border-color: #EDEBE9;
+    --shadow: none;
+    --shadow-lg: none;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Login Screen */
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--bg-secondary);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 2px;
+    padding: 40px;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.login-header h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.login-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.login-result {
+    padding: 12px;
+    border-radius: 2px;
+    font-size: 14px;
+    display: none;
+}
+
+.login-result.error {
+    display: block;
+    background: #FFF4F4;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+
+.login-info {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.login-info p {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.btn-block {
+    width: 100%;
+}
+
+/* Main Application */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    margin-bottom: 20px;
+    background: var(--bg-card);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.user-info {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.status-bar {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.icon {
+    font-size: 1.3em;
+}
+
+/* Status Indicators */
+.status-indicators {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    font-size: 0.85rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+}
+
+.status-badge.connected .status-dot {
+    background: var(--success-color);
+}
+
+.status-badge.disconnected .status-dot {
+    background: var(--danger-color);
+}
+
+/* Cards */
+.card {
+    background: var(--bg-card);
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.card-header {
+    padding: 16px 20px;
+    background: var(--bg-primary);
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.card-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Inputs */
+.input-group {
+    margin-bottom: 16px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    border-width: 2px;
+    padding: 7px 11px;
+}
+
+.input::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Password wrapper */
+.password-wrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.password-wrapper .input {
+    flex: 1;
+}
+
+.cid-input-wrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.cid-input-wrapper .input {
+    flex: 1;
+}
+
+/* Buttons */
+.btn {
+    padding: 8px 20px;
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #005A9E;
+}
+
+.btn-secondary {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+}
+
+.btn-icon {
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-icon:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* File input */
+.file-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+}
+
+.file-name {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.file-name.selected {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+/* Result messages */
+.result {
+    margin-top: 16px;
+    padding: 12px;
+    font-size: 0.9rem;
+    display: none;
+    border-left: 3px solid;
+}
+
+.result.show {
+    display: block;
+}
+
+.result.success {
+    background: #F3F9F1;
+    border-color: var(--success-color);
+    color: #0E5A0E;
+}
+
+.result.error {
+    background: #FDE7E9;
+    border-color: var(--danger-color);
+    color: #A80000;
+}
+
+.result.info {
+    background: #F3F9FF;
+    border-color: var(--primary-color);
+    color: #004578;
+}
+
+.result-title {
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.result-content {
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.result-content a {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.result-content a:hover {
+    color: #005A9E;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Loading spinner */
+.loading {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--bg-secondary);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .button-group {
+        flex-direction: column;
+    }
+
+    .button-group .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .file-input-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}

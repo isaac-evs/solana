@@ -1,0 +1,200 @@
+"""
+Authentication Service - Simple login functionality
+"""
+import hashlib
+import secrets
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
+from pathlib import Path
+from backend.config import get_data_dir
+from backend.utils.logger import setup_logger
+
+logger = setup_logger("auth_service")
+
+class AuthService:
+    """Service class for authentication"""
+    
+    def __init__(self):
+        self.sessions = {}  # In-memory session storage
+        self.session_timeout = timedelta(hours=24)  # 24 hour sessions
+        self._load_users()
+    
+    def _load_users(self):
+        """Load users from file or create default user"""
+        self.users_file = get_data_dir() / "users.txt"
+        self.users = {}
+        
+        if self.users_file.exists():
+            try:
+                with open(self.users_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and ':' in line:
+                            username, password_hash = line.split(':', 1)
+                            self.users[username] = password_hash
+                logger.info(f"Loaded {len(self.users)} users")
+            except Exception as e:
+                logger.error(f"Failed to load users: {str(e)}")
+        
+        # Create default user if no users exist
+        if not self.users:
+            self._create_default_user()
+    
+    def _create_default_user(self):
+        """Create default admin user"""
+        default_username = "admin"
+        default_password = "admin123"
+        password_hash = self._hash_password(default_password)
+        
+        self.users[default_username] = password_hash
+        self._save_users()
+        
+        logger.info("Created default user - Username: admin, Password: admin123")
+    
+    def _save_users(self):
+        """Save users to file"""
+        try:
+            self.users_file.parent.mkdir(exist_ok=True)
+            with open(self.users_file, 'w', encoding='utf-8') as f:
+                for username, password_hash in self.users.items():
+                    f.write(f"{username}:{password_hash}\n")
+            logger.info("Users saved successfully")
+        except Exception as e:
+            logger.error(f"Failed to save users: {str(e)}")
+    
+    def _hash_password(self, password: str) -> str:
+        """Hash password using SHA-256"""
+        return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    
+    def login(self, username: str, password: str) -> Dict[str, Any]:
+        """
+        Authenticate user and create session
+        
+        Args:
+            username: Username
+            password: Password
+            
+        Returns:
+            Dictionary containing session token and user info
+            
+        Raises:
+            Exception: If authentication fails
+        """
+        try:
+            # Validate credentials
+            if username not in self.users:
+                raise Exception("Invalid username or password")
+            
+            password_hash = self._hash_password(password)
+            if self.users[username] != password_hash:
+                raise Exception("Invalid username or password")
+            
+            # Create session
+            session_token = secrets.token_urlsafe(32)
+            session_data = {
+                "username": username,
+                "created_at": datetime.now(),
+                "expires_at": datetime.now() + self.session_timeout
+            }
+            
+            self.sessions[session_token] = session_data
+            
+            logger.info(f"User logged in: {username}")
+            
+            return {
+                "success": True,
+                "token": session_token,
+                "username": username,
+                "expires_at": session_data["expires_at"].isoformat()
+            }
+        
+        except Exception as e:
+            logger.warning(f"Login failed for user {username}: {str(e)}")
+            raise Exception(str(e))
+    
+    def logout(self, token: str) -> Dict[str, Any]:
+        """
+        Logout user and destroy session
+        
+        Args:
+            token: Session token
+            
+        Returns:
+            Dictionary containing logout status
+        """
+        if token in self.sessions:
+            username = self.sessions[token]["username"]
+            del self.sessions[token]
+            logger.info(f"User logged out: {username}")
+        
+        return {
+            "success": True,
+            "message": "Logged out successfully"
+        }
+    
+    def validate_session(self, token: str) -> Optional[Dict[str, Any]]:
+        """
+        Validate session token
+        
+        Args:
+            token: Session token
+            
+        Returns:
+            Session data if valid, None otherwise
+        """
+        if token not in self.sessions:
+            return None
+        
+        session_data = self.sessions[token]
+        
+        # Check if session expired
+        if datetime.now() > session_data["expires_at"]:
+            del self.sessions[token]
+            logger.info(f"Session expired for user: {session_data['username']}")
+            return None
+        
+        return session_data
+    
+    def change_password(self, username: str, old_password: str, new_password: str) -> Dict[str, Any]:
+        """
+        Change user password
+        
+        Args:
+            username: Username
+            old_password: Current password
+            new_password: New password
+            
+        Returns:
+            Dictionary containing change status
+            
+        Raises:
+            Exception: If password change fails
+        """
+        try:
+            # Validate old password
+            if username not in self.users:
+                raise Exception("User not found")
+            
+            old_password_hash = self._hash_password(old_password)
+            if self.users[username] != old_password_hash:
+                raise Exception("Current password is incorrect")
+            
+            # Validate new password
+            if len(new_password) < 6:
+                raise Exception("New password must be at least 6 characters")
+            
+            # Update password
+            new_password_hash = self._hash_password(new_password)
+            self.users[username] = new_password_hash
+            self._save_users()
+            
+            logger.info(f"Password changed for user: {username}")
+            
+            return {
+                "success": True,
+                "message": "Password changed successfully"
+            }
+        
+        except Exception as e:
+            logger.warning(f"Password change failed for user {username}: {str(e)}")
+            raise Exception(str(e))

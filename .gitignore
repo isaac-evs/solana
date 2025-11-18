@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Tauri
+/src-tauri/target/
+/src-tauri/WixTools/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Application Data
+*.log
+*.db
+*.sqlite
+
+# User Data (sensitive)
+backend/data/users.txt
+backend/data/uploads/
+backend/data/downloads/
+backend/data/transactions/
+
+# Environment
+.env
+.env.local
+
+# Node (if used for frontend tooling)
+node_modules/
+package-lock.json
+
+# Compiled files
+*.pyc
+*.pyo

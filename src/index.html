@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPFS Solana Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="login-screen">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>IPFS Solana Manager</h1>
+                <p>Sign in to continue</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="input-group">
+                    <label for="login-username">Username</label>
+                    <input 
+                        type="text" 
+                        id="login-username" 
+                        class="input" 
+                        placeholder="Enter username"
+                        required
+                    />
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Password</label>
+                    <input 
+                        type="password" 
+                        id="login-password" 
+                        class="input" 
+                        placeholder="Enter password"
+                        required
+                    />
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    Sign In
+                </button>
+                <div class="login-result" id="login-result"></div>
+                <div class="login-info">
+                    <p>Default credentials: admin / admin123</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="container" id="main-app" style="display: none;">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>IPFS Solana Manager</h1>
+                <div class="header-right">
+                    <span class="user-info" id="user-info"></span>
+                    <button class="btn btn-secondary btn-sm" id="logout-btn">
+                        Logout
+                    </button>
+                </div>
+            </div>
+            <div class="status-bar">
+                <div class="status-indicators">
+                    <div class="status-badge" id="ipfs-status">
+                        <span class="status-dot"></span>
+                        IPFS: <span class="status-text">Checking...</span>
+                    </div>
+                    <div class="status-badge" id="solana-status">
+                        <span class="status-dot"></span>
+                        Solana: <span class="status-text">Checking...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- IPFS Upload Section -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Upload to IPFS</h2>
+                </div>
+                <div class="card-body">
+                    <div class="file-input-wrapper">
+                        <button class="btn btn-secondary" id="select-file-btn">
+                            Select File
+                        </button>
+                        <span class="file-name" id="selected-file-name">No file selected</span>
+                    </div>
+                    <button class="btn btn-primary" id="upload-btn" disabled>
+                        Upload to IPFS
+                    </button>
+                    <div class="result" id="upload-result"></div>
+                </div>
+            </section>
+
+            <!-- Wallet Section -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Solana Wallet</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label for="private-key">Private Key</label>
+                        <div class="password-wrapper">
+                            <input 
+                                type="password" 
+                                id="private-key" 
+                                class="input" 
+                                placeholder="Enter your Solana private key"
+                            />
+                            <button class="btn-icon" id="toggle-key-visibility">
+                                Show
+                            </button>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="verify-wallet-btn">
+                            Verify Wallet
+                        </button>
+                        <button class="btn btn-primary" id="register-btn" disabled>
+                            Register on Solana
+                        </button>
+                    </div>
+                    <div class="result" id="wallet-result"></div>
+                </div>
+            </section>
+
+            <!-- IPFS Access Section -->
+            <section class="card">
+                <div class="card-header">
+                    <h2>Access IPFS Content</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label for="cid-input">IPFS CID</label>
+                        <div class="cid-input-wrapper">
+                            <input 
+                                type="text" 
+                                id="cid-input" 
+                                class="input" 
+                                placeholder="Enter IPFS CID"
+                            />
+                            <button class="btn-icon" id="paste-cid-btn" title="Paste last CID">
+                                Paste
+                            </button>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" id="open-browser-btn">
+                            Open in Browser
+                        </button>
+                        <button class="btn btn-secondary" id="download-btn">
+                            Download File
+                        </button>
+                    </div>
+                    <div class="result" id="access-result"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>IPFS Solana Manager v2.0.0 | Secure - Decentralized - Simple</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
