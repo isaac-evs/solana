@@ -16,7 +16,8 @@ Modern desktop application for IPFS uploads and Solana blockchain transactions. 
 1. **Install Dependencies**
 ```bash
 # Python dependencies
-source .venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
 # System dependencies (Linux)
@@ -35,6 +36,11 @@ ipfs daemon
 ```bash
 ./run.sh
 ```
+
+**⚠️ IMPORTANT:** This is a **desktop application**, not a website!
+- The Tauri window will open automatically
+- **DO NOT** open `http://localhost:3000` in your browser
+- If you see "undefined is not an object" errors, you're in a browser instead of the app
 
 4. **Login**
 - Username: `admin`

@@ -3,6 +3,20 @@
 
 const API_BASE = 'http://127.0.0.1:8765';
 
+// Debug: Check Tauri environment
+setTimeout(() => {
+    console.log('=== Tauri Environment Check (after load) ===');
+    console.log('window.__TAURI_INTERNALS__:', !!window.__TAURI_INTERNALS__);
+    console.log('window.__TAURI_INVOKE__:', !!window.__TAURI_INVOKE__);
+    console.log('window.__TAURI__:', !!window.__TAURI__);
+    if (window.__TAURI__) {
+        console.log('window.__TAURI__.dialog:', !!window.__TAURI__.dialog);
+        console.log('window.__TAURI__.shell:', !!window.__TAURI__.shell);
+    }
+    console.log('Location:', window.location.href);
+    console.log('===========================================');
+}, 500);
+
 // State management
 const state = {
     selectedFilePath: null,
@@ -232,9 +246,18 @@ function updateStatus(element, isConnected) {
 // File selection using Tauri API
 async function selectFile() {
     try {
-        // Use Tauri's dialog API
-        const selected = await window.__TAURI__.dialog.open({
+        // Check if running in Tauri context (window.__TAURI_INTERNALS__ exists in Tauri v2)
+        if (!window.__TAURI_INTERNALS__) {
+            showResult(elements.uploadResult, 'error', 'Not a Desktop App', 
+                'This application must be run as a desktop app using ./run.sh, not in a web browser. Please close the browser and run: ./run.sh');
+            return;
+        }
+        
+        // Use Tauri v2 dialog API - the correct way
+        const { open } = window.__TAURI__.dialog;
+        const selected = await open({
             multiple: false,
+            directory: false,
             filters: [{
                 name: 'All Files',
                 extensions: ['pdf', 'txt', 'json', 'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mp3']
@@ -248,7 +271,8 @@ async function selectFile() {
             elements.uploadBtn.disabled = false;
         }
     } catch (error) {
-        showResult(elements.uploadResult, 'error', 'File Selection Error', error.message);
+        console.error('File selection error:', error);
+        showResult(elements.uploadResult, 'error', 'File Selection Error', error.message || String(error));
     }
 }
 
@@ -417,8 +441,15 @@ async function openInBrowser() {
             throw new Error(data.error || 'Failed to get gateway URL');
         }
         
-        // Open URL using Tauri's shell API
-        await window.__TAURI__.shell.open(data.gateway_url);
+        // Check if running in Tauri context
+        if (!window.__TAURI_INTERNALS__) {
+            // Fallback for browser: open in new tab
+            window.open(data.gateway_url, '_blank');
+        } else {
+            // Open URL using Tauri's shell plugin
+            const { open } = window.__TAURI__.shell;
+            await open(data.gateway_url);
+        }
         
         showResult(elements.accessResult, 'success', '✅ Opening in Browser', 
             `CID: ${data.cid}<br>
@@ -438,11 +469,19 @@ async function downloadFile() {
         return;
     }
     
+    // Check if running in Tauri context
+    if (!window.__TAURI_INTERNALS__) {
+        showResult(elements.accessResult, 'error', 'Not a Desktop App', 
+            'Download requires desktop app. Please run: ./run.sh');
+        return;
+    }
+    
     setButtonLoading(elements.downloadBtn, true);
     
     try {
-        // Select download directory using Tauri API
-        const downloadDir = await window.__TAURI__.dialog.open({
+        // Select download directory using Tauri dialog API
+        const { open } = window.__TAURI__.dialog;
+        const downloadDir = await open({
             directory: true,
             multiple: false
         });

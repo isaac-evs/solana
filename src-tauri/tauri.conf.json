@@ -20,8 +20,10 @@
     ]
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "IPFS Solana Manager",
         "width": 1000,
         "height": 800,
@@ -32,7 +34,8 @@
       }
     ],
     "security": {
-      "capabilities": []
+      "csp": null,
+      "capabilities": ["default"]
     }
   }
 }

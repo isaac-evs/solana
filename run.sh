@@ -11,7 +11,7 @@ echo "================================="
 echo ""
 
 # Check if virtual environment exists
-if [ ! -d ".venv" ]; then
+if [ ! -d "venv" ]; then
     echo "❌ Virtual environment not found!"
     echo "Please run: python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
     exit 1
@@ -45,13 +45,15 @@ echo ""
 
 # Start frontend server in background
 echo "🌐 Starting frontend server..."
+echo "⚠️  IMPORTANT: Do NOT open http://localhost:3000 in your browser!"
+echo "⚠️  The Tauri desktop app will open automatically."
 python3 serve_frontend.py &
 FRONTEND_PID=$!
 sleep 2
 
 # Start backend API server in background
 echo "📡 Starting backend API server..."
-source .venv/bin/activate
+source venv/bin/activate
 python backend/api_server.py &
 BACKEND_PID=$!
 

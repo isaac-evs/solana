@@ -9,6 +9,6 @@ ipfshttpclient==0.8.0a2
 
 # Solana Blockchain
 solana==0.36.10
-solders==0.21.0
+solders==0.23.0
 base58==2.1.1
 
