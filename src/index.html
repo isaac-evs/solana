@@ -14,7 +14,7 @@
     <div class="login-container" id="login-screen">
         <div class="login-card">
             <div class="login-header">
-                <h1>IPFS Solana Manager</h1>
+                <h1 id="login-logo" style="cursor: pointer; user-select: none;">IPFS Solana Manager</h1>
                 <p>Sign in to continue</p>
             </div>
             <form id="login-form" class="login-form">
@@ -42,6 +42,12 @@
                     Sign In
                 </button>
                 <div class="login-result" id="login-result"></div>
+                
+                <!-- Hidden reset button (appears after clicking logo 5 times) -->
+                <button type="button" id="secret-reset-btn" class="btn btn-secondary btn-block" style="display: none; margin-top: 16px; border-color: #D13438; color: #D13438;">
+                    Reset Application
+                </button>
+                
                 <div class="login-info">
                     <p style="font-size: 12px; color: #888;">First time? Your credentials were auto-generated and shown on first launch.</p>
                 </div>

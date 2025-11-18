@@ -94,6 +94,48 @@ def handle_validation_error(error):
     }), 400
 
 
+@app.route('/auth/reset-application', methods=['POST'])
+def reset_application():
+    """
+    NUCLEAR OPTION: Complete application reset
+    Deletes all user data and regenerates credentials
+    
+    This is intentionally destructive - no recovery, no questions asked.
+    Requires knowledge of data directory location (physical access security).
+    """
+    try:
+        data_dir = get_data_dir()
+        
+        # Delete users file
+        users_file = data_dir / "users.txt"
+        if users_file.exists():
+            users_file.unlink()
+            logger.warning("Application reset: users.txt deleted")
+        
+        # Delete any existing welcome credentials
+        welcome_file = data_dir / "WELCOME_CREDENTIALS.txt"
+        if welcome_file.exists():
+            welcome_file.unlink()
+        
+        # Reinitialize auth service (will create new credentials)
+        global auth_service
+        auth_service = AuthService()
+        
+        logger.warning("Application reset completed - new credentials generated")
+        
+        return jsonify({
+            "success": True,
+            "message": "Application reset successful. New credentials have been generated."
+        })
+    
+    except Exception as e:
+        logger.error(f"Application reset failed: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""

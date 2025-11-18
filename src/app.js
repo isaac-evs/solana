@@ -35,7 +35,9 @@ const loginElements = {
     passwordInput: document.getElementById('login-password'),
     loginResult: document.getElementById('login-result'),
     userInfo: document.getElementById('user-info'),
-    logoutBtn: document.getElementById('logout-btn')
+    logoutBtn: document.getElementById('logout-btn'),
+    loginLogo: document.getElementById('login-logo'),
+    secretResetBtn: document.getElementById('secret-reset-btn')
 };
 
 // DOM Elements - Main App
@@ -72,6 +74,30 @@ async function init() {
 function setupLoginListeners() {
     loginElements.loginForm.addEventListener('submit', handleLogin);
     loginElements.logoutBtn?.addEventListener('click', handleLogout);
+    
+    // Secret easter egg: Click logo 5 times to reveal reset button
+    let clickCount = 0;
+    let clickTimer = null;
+    
+    loginElements.loginLogo?.addEventListener('click', () => {
+        clickCount++;
+        
+        // Reset counter after 2 seconds of no clicks
+        clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+            clickCount = 0;
+        }, 2000);
+        
+        // Show reset button after 5 clicks
+        if (clickCount === 5) {
+            loginElements.secretResetBtn.style.display = 'block';
+            loginElements.loginLogo.style.color = '#D13438';
+            clickCount = 0;
+        }
+    });
+    
+    // Handle secret reset button
+    loginElements.secretResetBtn?.addEventListener('click', resetApplication);
 }
 
 // Check for first-time setup and show credentials
@@ -241,7 +267,7 @@ function showFirstTimeCredentials(username, password) {
                 color: #605E5C;
                 text-align: center;
             ">
-                Backup location: ~/.ipfs-solana-manager/WELCOME_CREDENTIALS.txt
+                No backup file is created. Save these credentials now or they are lost forever.
             </p>
         </div>
     `;
@@ -358,6 +384,97 @@ function showLoginScreen() {
     loginElements.usernameInput.value = '';
     loginElements.passwordInput.value = '';
     loginElements.loginResult.className = 'login-result';
+}
+
+// Reset application (nuclear option)
+async function resetApplication() {
+    const confirmed = confirm(
+        'DANGER: This will permanently delete all user data and generate new credentials.\n\n' +
+        'This action cannot be undone.\n\n' +
+        'Are you absolutely sure?'
+    );
+    
+    if (!confirmed) return;
+    
+    const doubleConfirmed = confirm(
+        'FINAL WARNING: All data will be lost.\n\n' +
+        'Type OK in the next prompt to proceed.'
+    );
+    
+    if (!doubleConfirmed) return;
+    
+    const finalCheck = prompt('Type RESET in capital letters to confirm:');
+    
+    if (finalCheck !== 'RESET') {
+        alert('Reset cancelled.');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/auth/reset-application`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Application reset successful!\n\nNew credentials will be shown in a moment.\n\nPlease reload the page.');
+            // Force reload to show new credentials
+            window.location.reload();
+        } else {
+            alert('Reset failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Reset error:', error);
+        alert('Reset failed: ' + error.message);
+    }
+}
+
+// Make reset function available globally
+window.resetApplication = resetApplication;
+
+// Reset application (nuclear option)
+async function resetApplication() {
+    const confirmed = confirm(
+        'DANGER: This will permanently delete all user data and generate new credentials.\n\n' +
+        'This action cannot be undone.\n\n' +
+        'Are you absolutely sure?'
+    );
+    
+    if (!confirmed) return;
+    
+    const doubleConfirmed = confirm(
+        'FINAL WARNING: All data will be lost.\n\n' +
+        'Click OK to proceed with reset.'
+    );
+    
+    if (!doubleConfirmed) return;
+    
+    const finalCheck = prompt('Type RESET in capital letters to confirm:');
+    
+    if (finalCheck !== 'RESET') {
+        alert('Reset cancelled.');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/auth/reset-application`, {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Application reset successful!\n\nNew credentials will be shown in a moment.\n\nPlease reload the page.');
+            // Force reload to show new credentials
+            window.location.reload();
+        } else {
+            alert('Reset failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Reset error:', error);
+        alert('Reset failed: ' + error.message);
+    }
 }
 
 // Setup main app event listeners

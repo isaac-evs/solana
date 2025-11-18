@@ -75,7 +75,8 @@ class AuthService:
         self.users[username] = password_hash
         self._save_users()
         
-        # Save credentials to a welcome file
+        # Save credentials to a temporary file for ONE-TIME display
+        # This will be deleted immediately after being read by the frontend
         self._save_welcome_credentials(username, password)
         
         logger.info(f"Created secure user with random credentials - Username: {username}")
@@ -95,30 +96,24 @@ class AuthService:
         return secrets.token_urlsafe(15)  # This gives us ~20 chars
     
     def _save_welcome_credentials(self, username: str, password: str):
-        """Save credentials to a welcome file that user must read"""
+        """Save credentials to a temporary file for ONE-TIME display only"""
         welcome_file = get_data_dir() / "WELCOME_CREDENTIALS.txt"
         
         try:
+            # Save ONLY the credentials in simple format
+            # This file will be deleted immediately after being read
             with open(welcome_file, 'w', encoding='utf-8') as f:
-                f.write("=" * 70 + "\n")
-                f.write("  IPFS SOLANA MANAGER - SECURE LOGIN CREDENTIALS\n")
-                f.write("=" * 70 + "\n\n")
-                f.write("⚠️  IMPORTANT: SAVE THESE CREDENTIALS NOW! ⚠️\n\n")
-                f.write("These credentials are randomly generated for maximum security.\n")
-                f.write("They will NOT be shown again. If you lose them, you'll need to\n")
-                f.write("delete the users.txt file and restart the application.\n\n")
-                f.write("-" * 70 + "\n")
                 f.write(f"USERNAME: {username}\n")
                 f.write(f"PASSWORD: {password}\n")
-                f.write("-" * 70 + "\n\n")
-                f.write("📝 Write these down or save them in a password manager NOW!\n\n")
-                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write("=" * 70 + "\n")
             
-            logger.info(f"Welcome credentials saved to: {welcome_file}")
+            # Set restrictive permissions (owner read/write only)
+            import os
+            os.chmod(welcome_file, 0o600)
+            
+            logger.info(f"Temporary credentials file created (will be auto-deleted)")
             
         except Exception as e:
-            logger.error(f"Failed to save welcome credentials: {str(e)}")
+            logger.error(f"Failed to save temporary credentials: {str(e)}")
     
     def _save_users(self):
         """Save users to file"""

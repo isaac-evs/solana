@@ -42,16 +42,20 @@ ipfs daemon
    On first launch, the app will:
    - Generate a secure random username (e.g., "bravewolf421")
    - Generate a strong 20-character random password
-   - Display them ONCE in a modal dialog
+   - Display them **ONCE** in a modal dialog
    - **⚠️ SAVE THESE CREDENTIALS IMMEDIATELY!**
    
-   The credentials are also saved to: `~/.ipfs-solana-manager/WELCOME_CREDENTIALS.txt`
+   **No backup file is created** - this is intentional for security.
+   Click the fields to copy them to clipboard.
    
    **If you lose your credentials:**
+   
    ```bash
    rm ~/.ipfs-solana-manager/users.txt
    ./run.sh  # Will generate new credentials
    ```
+   
+   ⚠️ **WARNING**: This permanently deletes all user data. No recovery possible.
 
 ## Architecture
 
@@ -100,13 +104,27 @@ This is a **local desktop application**, not a web service:
 - No password reuse risk
 - No brute-force attacks (rate limiting)
 - Credentials never transmitted over network
+- **No recovery backdoor** to exploit
 
 ⚠️ **Cons:**
 - User must save credentials externally
-- Lost credentials = reset required
+- Lost credentials = nuclear reset required
 - No account recovery mechanism
 
-This is intentional - security over convenience for crypto operations.
+This is intentional - **security over convenience** for crypto operations.
+Think of it like a hardware wallet: lose your seed phrase = start over.
+
+### Security Assumptions
+
+This application assumes:
+- ✅ You have legitimate physical access to this machine
+- ✅ Your operating system is secured (password, encryption)
+- ✅ You protect your Solana private keys externally
+- ⚠️ **Physical security is YOUR responsibility**
+
+**If laptop is stolen:** Attacker with physical access can reset the app.
+Your real security is protecting private keys in a hardware wallet or password manager.
+The app is a **secure tool**, not a **vault** - the vault is your OS encryption.
 
 ## Development
 
