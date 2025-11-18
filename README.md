@@ -4,12 +4,12 @@ Modern desktop application for IPFS uploads and Solana blockchain transactions. 
 
 ## Features
 
-- 🔐 **Login System** - Simple authentication (default: admin/admin123)
-- 📤 **IPFS Upload** - Upload files to IPFS with validation
-- 📥 **Zip Downloads** - Downloads automatically zipped
-- 🔗 **Solana Integration** - Register CIDs on blockchain
-- � **Professional UI** - Microsoft/IBM inspired design with Inter font
-- 🔒 **Security** - Protected routes, session management, input validation
+- **Login System** - Simple authentication (default: admin/admin123)
+- **IPFS Upload** - Upload files to IPFS with validation
+- **Zip Downloads** - Downloads automatically zipped
+- **Solana Integration** - Register CIDs on blockchain
+- **Professional UI** - Proffesional and Polished UI design with Inter font
+- **Security** - Protected routes, session management, input validation
 
 ## Quick Start
 
