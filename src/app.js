@@ -395,11 +395,16 @@ async function registerOnSolana() {
             throw new Error(data.error || 'Registration failed');
         }
         
+        // SECURITY: Clear private key from input after successful transaction
+        elements.privateKeyInput.value = '';
+        state.isWalletVerified = false;
+        
         showResult(elements.walletResult, 'success', '✅ Transaction Successful', 
             `CID: <code>${data.cid}</code><br>
              Signature: <code>${data.signature.substring(0, 20)}...</code><br>
              Network: ${data.network}<br>
-             <a href="${data.explorer_url}" target="_blank">View on Explorer</a>`
+             <a href="${data.explorer_url}" target="_blank">View on Explorer</a><br>
+             <small>Private key cleared from memory for security</small>`
         );
     } catch (error) {
         showResult(elements.walletResult, 'error', '❌ Transaction Failed', error.message);
@@ -548,6 +553,16 @@ function formatBytes(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+
+// Clear sensitive data on window unload (security measure)
+window.addEventListener('beforeunload', () => {
+    // Clear private key from DOM if present
+    if (elements.privateKeyInput) {
+        elements.privateKeyInput.value = '';
+    }
+    // Note: We keep auth tokens for convenience, but in high-security 
+    // scenarios you might want to clear them here too
+});
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {

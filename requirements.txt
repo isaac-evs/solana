@@ -4,6 +4,9 @@
 flask==3.0.0
 flask-cors==4.0.0
 
+# Security
+bcrypt==4.1.2
+
 # IPFS Integration
 ipfshttpclient==0.8.0a2
 

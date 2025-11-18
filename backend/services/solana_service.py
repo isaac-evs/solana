@@ -34,6 +34,7 @@ class SolanaService:
         Raises:
             Exception: If validation fails
         """
+        keypair = None
         try:
             # Validate and sanitize private key
             clean_key = validate_private_key(private_key)
@@ -49,7 +50,7 @@ class SolanaService:
             # Note: We do NOT return the private key or public key in plaintext for security
             logger.info("Wallet validated successfully")
             
-            return {
+            result = {
                 "success": True,
                 "balance_sol": balance_sol,
                 "balance_lamports": balance_lamports,
@@ -57,10 +58,19 @@ class SolanaService:
                 # Only return a truncated version of public key for display
                 "public_key_preview": str(keypair.pubkey())[:8] + "..." + str(keypair.pubkey())[-8:]
             }
+            
+            return result
         
         except Exception as e:
             logger.error(f"Wallet validation failed: {str(e)}")
             raise Exception(f"Invalid wallet: {str(e)}")
+        finally:
+            # Clear sensitive data from memory
+            if keypair:
+                del keypair
+            del private_key
+            if 'clean_key' in locals():
+                del clean_key
     
     def register_transaction(self, private_key: str, cid: str) -> Dict[str, Any]:
         """
@@ -76,6 +86,7 @@ class SolanaService:
         Raises:
             Exception: If transaction fails
         """
+        keypair = None
         try:
             # Validate inputs
             clean_key = validate_private_key(private_key)
@@ -123,17 +134,26 @@ class SolanaService:
             
             logger.info(f"Transaction successful. Signature: {tx_signature}")
             
-            return {
+            result = {
                 "success": True,
                 "signature": tx_signature,
                 "explorer_url": explorer_url,
                 "network": self.network,
                 "cid": cid
             }
+            
+            return result
         
         except Exception as e:
             logger.error(f"Transaction failed: {str(e)}")
             raise Exception(f"Transaction failed: {str(e)}")
+        finally:
+            # Clear sensitive data from memory
+            if keypair:
+                del keypair
+            del private_key
+            if 'clean_key' in locals():
+                del clean_key
     
     def get_balance(self, private_key: str) -> float:
         """

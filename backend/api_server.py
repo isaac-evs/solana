@@ -21,7 +21,21 @@ from backend.utils.security import ValidationError
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for Tauri frontend
+
+# Configure CORS - only allow localhost and Tauri origins
+# Tauri uses tauri://localhost and http://localhost:3000 in dev mode
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "tauri://localhost",
+            "https://tauri.localhost"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Initialize services
 ipfs_service = IPFSService()

@@ -3,6 +3,7 @@ Authentication Service - Simple login functionality
 """
 import hashlib
 import secrets
+import bcrypt
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -17,6 +18,9 @@ class AuthService:
     def __init__(self):
         self.sessions = {}  # In-memory session storage
         self.session_timeout = timedelta(hours=24)  # 24 hour sessions
+        self.failed_attempts = {}  # Track failed login attempts
+        self.lockout_duration = timedelta(minutes=15)  # Lockout for 15 minutes
+        self.max_attempts = 5  # Max failed attempts before lockout
         self._load_users()
     
     def _load_users(self):
@@ -31,6 +35,10 @@ class AuthService:
                         line = line.strip()
                         if line and ':' in line:
                             username, password_hash = line.split(':', 1)
+                            # Check if it's an old SHA-256 hash (64 hex chars)
+                            # vs new bcrypt hash (starts with $2b$)
+                            if len(password_hash) == 64 and not password_hash.startswith('$'):
+                                logger.warning(f"User {username} has old SHA-256 hash, will be migrated on next login")
                             self.users[username] = password_hash
                 logger.info(f"Loaded {len(self.users)} users")
             except Exception as e:
@@ -63,8 +71,28 @@ class AuthService:
             logger.error(f"Failed to save users: {str(e)}")
     
     def _hash_password(self, password: str) -> str:
-        """Hash password using SHA-256"""
-        return hashlib.sha256(password.encode('utf-8')).hexdigest()
+        """Hash password using bcrypt (secure with salt)"""
+        # bcrypt automatically handles salting
+        password_bytes = password.encode('utf-8')
+        hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt(rounds=12))
+        return hashed.decode('utf-8')
+    
+    def _verify_password(self, password: str, password_hash: str) -> bool:
+        """Verify password against bcrypt hash (with legacy SHA-256 support)"""
+        try:
+            # Check if it's an old SHA-256 hash (64 hex characters)
+            if len(password_hash) == 64 and not password_hash.startswith('$'):
+                # Legacy SHA-256 verification
+                old_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+                return old_hash == password_hash
+            
+            # Modern bcrypt verification
+            password_bytes = password.encode('utf-8')
+            hash_bytes = password_hash.encode('utf-8')
+            return bcrypt.checkpw(password_bytes, hash_bytes)
+        except Exception as e:
+            logger.error(f"Password verification error: {str(e)}")
+            return False
     
     def login(self, username: str, password: str) -> Dict[str, Any]:
         """
@@ -81,13 +109,38 @@ class AuthService:
             Exception: If authentication fails
         """
         try:
+            # Check if user is locked out
+            if username in self.failed_attempts:
+                lockout_info = self.failed_attempts[username]
+                if lockout_info['count'] >= self.max_attempts:
+                    lockout_until = lockout_info['locked_at'] + self.lockout_duration
+                    if datetime.now() < lockout_until:
+                        remaining = (lockout_until - datetime.now()).seconds // 60
+                        raise Exception(f"Account locked. Try again in {remaining} minutes")
+                    else:
+                        # Lockout expired, reset counter
+                        del self.failed_attempts[username]
+            
             # Validate credentials
             if username not in self.users:
+                self._record_failed_attempt(username)
                 raise Exception("Invalid username or password")
             
-            password_hash = self._hash_password(password)
-            if self.users[username] != password_hash:
+            if not self._verify_password(password, self.users[username]):
+                self._record_failed_attempt(username)
                 raise Exception("Invalid username or password")
+            
+            # Migrate old SHA-256 hash to bcrypt on successful login
+            current_hash = self.users[username]
+            if len(current_hash) == 64 and not current_hash.startswith('$'):
+                logger.info(f"Migrating user {username} from SHA-256 to bcrypt")
+                new_hash = self._hash_password(password)
+                self.users[username] = new_hash
+                self._save_users()
+            
+            # Clear failed attempts on successful login
+            if username in self.failed_attempts:
+                del self.failed_attempts[username]
             
             # Create session
             session_token = secrets.token_urlsafe(32)
@@ -111,6 +164,19 @@ class AuthService:
         except Exception as e:
             logger.warning(f"Login failed for user {username}: {str(e)}")
             raise Exception(str(e))
+    
+    def _record_failed_attempt(self, username: str):
+        """Record a failed login attempt"""
+        if username not in self.failed_attempts:
+            self.failed_attempts[username] = {
+                'count': 1,
+                'locked_at': datetime.now()
+            }
+        else:
+            self.failed_attempts[username]['count'] += 1
+            if self.failed_attempts[username]['count'] >= self.max_attempts:
+                self.failed_attempts[username]['locked_at'] = datetime.now()
+                logger.warning(f"Account locked due to multiple failed attempts: {username}")
     
     def logout(self, token: str) -> Dict[str, Any]:
         """
@@ -175,8 +241,7 @@ class AuthService:
             if username not in self.users:
                 raise Exception("User not found")
             
-            old_password_hash = self._hash_password(old_password)
-            if self.users[username] != old_password_hash:
+            if not self._verify_password(old_password, self.users[username]):
                 raise Exception("Current password is incorrect")
             
             # Validate new password
