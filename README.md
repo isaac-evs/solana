@@ -4,12 +4,12 @@ Modern desktop application for IPFS uploads and Solana blockchain transactions. 
 
 ## Features
 
-- **Login System** - Simple authentication (default: admin/admin123)
-- **IPFS Upload** - Upload files to IPFS with validation
-- **Zip Downloads** - Downloads automatically zipped
-- **Solana Integration** - Register CIDs on blockchain
-- **Professional UI** - Proffesional and Polished UI design with Inter font
-- **Security** - Protected routes, session management, input validation
+- **🔐 Secure Login** - Auto-generated credentials with readable usernames (e.g., "swiftpanda247")
+- **📤 IPFS Upload** - Upload files to IPFS with validation
+- **📦 Zip Downloads** - Downloads automatically zipped
+- **⛓️ Solana Integration** - Register CIDs on blockchain
+- **🎨 Professional UI** - Polished UI design with Inter font
+- **🛡️ Security** - bcrypt passwords, rate limiting, session management, input validation
 
 ## Quick Start
 
@@ -37,14 +37,21 @@ ipfs daemon
 ./run.sh
 ```
 
-**⚠️ IMPORTANT:** This is a **desktop application**, not a website!
-- The Tauri window will open automatically
-- **DO NOT** open `http://localhost:3000` in your browser
-- If you see "undefined is not an object" errors, you're in a browser instead of the app
-
-4. **Login**
-- Username: `admin`
-- Password: `admin123`
+4. **First-Time Login**
+   
+   On first launch, the app will:
+   - Generate a secure random username (e.g., "bravewolf421")
+   - Generate a strong 20-character random password
+   - Display them ONCE in a modal dialog
+   - **⚠️ SAVE THESE CREDENTIALS IMMEDIATELY!**
+   
+   The credentials are also saved to: `~/.ipfs-solana-manager/WELCOME_CREDENTIALS.txt`
+   
+   **If you lose your credentials:**
+   ```bash
+   rm ~/.ipfs-solana-manager/users.txt
+   ./run.sh  # Will generate new credentials
+   ```
 
 ## Architecture
 
@@ -65,13 +72,41 @@ src-tauri/        # Tauri desktop wrapper
 - **Solana**: Devnet
 - **Data**: `~/.ipfs-solana-manager/`
 
-## Security
+## Security Features
 
-- All endpoints require authentication
-- 24-hour session tokens
-- SHA-256 password hashing
-- File validation (100MB limit)
-- Downloads as zip files
+- **🔒 Strong Password Hashing**: bcrypt with 12 rounds (not reversible)
+- **🎲 Random Credentials**: Auto-generated on first launch for maximum security
+- **🚫 Rate Limiting**: 5 failed login attempts = 15 minute lockout
+- **⏱️ Session Management**: 24-hour token expiration
+- **🧹 Memory Clearing**: Private keys cleared after use
+- **📝 Input Validation**: File size limits (100MB), extension whitelist, path traversal protection
+- **🌐 CORS Protection**: Only localhost origins allowed
+- **🔐 CSP Headers**: Content Security Policy configured
+- **🚷 No Password Recovery**: Lost credentials require app reset (like crypto wallets)
+
+### Why This Security Model?
+
+This is a **local desktop application**, not a web service:
+- No remote access needed
+- User has physical access to the machine
+- Similar security model to cryptocurrency wallets
+- One-time credential generation prevents weak passwords
+- No "forgot password" attack vector
+
+### Security Trade-offs
+
+✅ **Pros:**
+- Strongest possible passwords (20+ random characters)
+- No password reuse risk
+- No brute-force attacks (rate limiting)
+- Credentials never transmitted over network
+
+⚠️ **Cons:**
+- User must save credentials externally
+- Lost credentials = reset required
+- No account recovery mechanism
+
+This is intentional - security over convenience for crypto operations.
 
 ## Development
 

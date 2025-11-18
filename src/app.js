@@ -64,6 +64,7 @@ const elements = {
 // Initialize app
 async function init() {
     setupLoginListeners();
+    await checkFirstTimeSetup();
     checkExistingSession();
 }
 
@@ -71,6 +72,190 @@ async function init() {
 function setupLoginListeners() {
     loginElements.loginForm.addEventListener('submit', handleLogin);
     loginElements.logoutBtn?.addEventListener('click', handleLogout);
+}
+
+// Check for first-time setup and show credentials
+async function checkFirstTimeSetup() {
+    try {
+        const response = await fetch(`${API_BASE}/auth/first-time-check`);
+        const data = await response.json();
+        
+        if (data.is_first_time && data.username && data.password) {
+            showFirstTimeCredentials(data.username, data.password);
+        }
+    } catch (error) {
+        console.error('First-time check failed:', error);
+    }
+}
+
+// Show first-time credentials in a modal
+function showFirstTimeCredentials(username, password) {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    `;
+    
+    modal.innerHTML = `
+        <div style="
+            background: #FAFAFA;
+            border: 2px solid #EDEBE9;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+        ">
+            <div style="
+                padding-bottom: 20px;
+                border-bottom: 2px solid #0078D4;
+                margin-bottom: 24px;
+            ">
+                <h1 style="
+                    margin: 0;
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #323130;
+                ">Account Credentials</h1>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <p style="
+                    margin: 0;
+                    color: #605E5C;
+                    font-size: 14px;
+                    line-height: 1.5;
+                ">
+                    Your secure login credentials have been generated. Save them immediately in a secure location.
+                </p>
+            </div>
+            
+            <div style="
+                background: #FFFFFF;
+                border: 1px solid #EDEBE9;
+                padding: 20px;
+                margin: 20px 0;
+            ">
+                <div style="margin-bottom: 16px;">
+                    <label style="
+                        display: block;
+                        font-size: 13px;
+                        font-weight: 600;
+                        margin-bottom: 6px;
+                        color: #323130;
+                    ">USERNAME</label>
+                    <div style="
+                        font-family: 'Courier New', monospace;
+                        font-size: 14px;
+                        padding: 8px 12px;
+                        background: #FFFFFF;
+                        border: 1px solid #EDEBE9;
+                        cursor: pointer;
+                        color: #323130;
+                    " 
+                    onclick="navigator.clipboard.writeText('${username}'); this.style.borderColor='#0078D4'; this.style.borderWidth='2px'; this.style.padding='7px 11px'; setTimeout(() => { this.style.borderColor='#EDEBE9'; this.style.borderWidth='1px'; this.style.padding='8px 12px'; }, 1000);"
+                    onmouseover="this.style.background='#F3F2F1'"
+                    onmouseout="this.style.background='#FFFFFF'">
+                        ${username}
+                    </div>
+                </div>
+                
+                <div>
+                    <label style="
+                        display: block;
+                        font-size: 13px;
+                        font-weight: 600;
+                        margin-bottom: 6px;
+                        color: #323130;
+                    ">PASSWORD</label>
+                    <div style="
+                        font-family: 'Courier New', monospace;
+                        font-size: 14px;
+                        padding: 8px 12px;
+                        background: #FFFFFF;
+                        border: 1px solid #EDEBE9;
+                        cursor: pointer;
+                        word-break: break-all;
+                        color: #323130;
+                    " 
+                    onclick="navigator.clipboard.writeText('${password}'); this.style.borderColor='#0078D4'; this.style.borderWidth='2px'; this.style.padding='7px 11px'; setTimeout(() => { this.style.borderColor='#EDEBE9'; this.style.borderWidth='1px'; this.style.padding='8px 12px'; }, 1000);"
+                    onmouseover="this.style.background='#F3F2F1'"
+                    onmouseout="this.style.background='#FFFFFF'">
+                        ${password}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="
+                background: #F3F2F1;
+                border-left: 3px solid #323130;
+                padding: 16px;
+                margin: 20px 0;
+            ">
+                <div style="
+                    font-weight: 600;
+                    margin-bottom: 8px;
+                    font-size: 13px;
+                    color: #323130;
+                ">Important Security Notice</div>
+                <ul style="
+                    margin: 0;
+                    padding-left: 20px;
+                    font-size: 13px;
+                    line-height: 1.6;
+                    color: #605E5C;
+                ">
+                    <li>These credentials will never be shown again</li>
+                    <li>Click any field above to copy to clipboard</li>
+                    <li>Store in a secure password manager</li>
+                    <li>Loss of credentials requires application reset</li>
+                </ul>
+            </div>
+            
+            <button id="credentials-saved-btn" style="
+                background: #0078D4;
+                color: white;
+                border: none;
+                padding: 8px 20px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                width: 100%;
+                font-family: 'Inter', sans-serif;
+            " 
+            onmouseover="this.style.background='#005A9E'" 
+            onmouseout="this.style.background='#0078D4'">
+                I Have Saved These Credentials
+            </button>
+            
+            <p style="
+                margin: 16px 0 0 0;
+                font-size: 12px;
+                color: #605E5C;
+                text-align: center;
+            ">
+                Backup location: ~/.ipfs-solana-manager/WELCOME_CREDENTIALS.txt
+            </p>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Auto-fill the login form
+    loginElements.usernameInput.value = username;
+    loginElements.passwordInput.value = password;
+    
+    // Handle button click
+    document.getElementById('credentials-saved-btn').addEventListener('click', () => {
+        modal.remove();
+    });
 }
 
 // Check for existing session

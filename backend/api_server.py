@@ -106,6 +106,50 @@ def health_check():
     })
 
 
+@app.route('/auth/first-time-check', methods=['GET'])
+def first_time_check():
+    """Check if this is first time setup and return credentials if available"""
+    try:
+        welcome_file = get_data_dir() / "WELCOME_CREDENTIALS.txt"
+        
+        if welcome_file.exists():
+            # Read and return the credentials
+            with open(welcome_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Parse username and password from the file
+            username = None
+            password = None
+            for line in content.split('\n'):
+                if line.startswith('USERNAME:'):
+                    username = line.split('USERNAME:')[1].strip()
+                elif line.startswith('PASSWORD:'):
+                    password = line.split('PASSWORD:')[1].strip()
+            
+            if username and password:
+                # Delete the file after reading (one-time show)
+                welcome_file.unlink()
+                logger.info("First-time credentials delivered and file deleted")
+                
+                return jsonify({
+                    "is_first_time": True,
+                    "username": username,
+                    "password": password,
+                    "message": "Save these credentials now! They won't be shown again."
+                })
+        
+        return jsonify({
+            "is_first_time": False
+        })
+    
+    except Exception as e:
+        logger.error(f"First-time check failed: {str(e)}")
+        return jsonify({
+            "is_first_time": False,
+            "error": str(e)
+        }), 500
+
+
 @app.route('/auth/login', methods=['POST'])
 def login():
     """Login endpoint"""

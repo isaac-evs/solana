@@ -4,6 +4,7 @@ Authentication Service - Simple login functionality
 import hashlib
 import secrets
 import bcrypt
+import random
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -11,6 +12,20 @@ from backend.config import get_data_dir
 from backend.utils.logger import setup_logger
 
 logger = setup_logger("auth_service")
+
+# Word lists for generating readable usernames
+ADJECTIVES = [
+    "happy", "sad", "brave", "shy", "calm", "wild", "swift", "gentle", 
+    "fierce", "clever", "wise", "silly", "proud", "humble", "bold", "quiet",
+    "bright", "dark", "cool", "warm", "smooth", "rough", "sweet", "spicy"
+]
+
+ANIMALS = [
+    "gorilla", "panda", "tiger", "lion", "eagle", "hawk", "wolf", "bear",
+    "fox", "deer", "owl", "raven", "dolphin", "whale", "shark", "otter",
+    "koala", "lemur", "lynx", "badger", "falcon", "moose", "bison", "cobra",
+    "penguin", "seal", "walrus", "turtle", "gecko", "iguana", "falcon", "crane"
+]
 
 class AuthService:
     """Service class for authentication"""
@@ -49,15 +64,61 @@ class AuthService:
             self._create_default_user()
     
     def _create_default_user(self):
-        """Create default admin user"""
-        default_username = "admin"
-        default_password = "admin123"
-        password_hash = self._hash_password(default_password)
+        """Create default user with random secure credentials"""
+        # Generate readable username (e.g., "swiftpanda", "bravewolf")
+        username = self._generate_username()
         
-        self.users[default_username] = password_hash
+        # Generate strong random password (16-24 characters)
+        password = self._generate_password()
+        
+        password_hash = self._hash_password(password)
+        self.users[username] = password_hash
         self._save_users()
         
-        logger.info("Created default user - Username: admin, Password: admin123")
+        # Save credentials to a welcome file
+        self._save_welcome_credentials(username, password)
+        
+        logger.info(f"Created secure user with random credentials - Username: {username}")
+    
+    def _generate_username(self) -> str:
+        """Generate a readable username like Reddit (e.g., 'swiftpanda')"""
+        adjective = random.choice(ADJECTIVES)
+        animal = random.choice(ANIMALS)
+        # Add random number for uniqueness (2-3 digits)
+        number = random.randint(10, 999)
+        return f"{adjective}{animal}{number}"
+    
+    def _generate_password(self) -> str:
+        """Generate a strong random password (20 characters)"""
+        # Use URL-safe base64 which gives us readable characters
+        # 20 characters provides ~120 bits of entropy
+        return secrets.token_urlsafe(15)  # This gives us ~20 chars
+    
+    def _save_welcome_credentials(self, username: str, password: str):
+        """Save credentials to a welcome file that user must read"""
+        welcome_file = get_data_dir() / "WELCOME_CREDENTIALS.txt"
+        
+        try:
+            with open(welcome_file, 'w', encoding='utf-8') as f:
+                f.write("=" * 70 + "\n")
+                f.write("  IPFS SOLANA MANAGER - SECURE LOGIN CREDENTIALS\n")
+                f.write("=" * 70 + "\n\n")
+                f.write("⚠️  IMPORTANT: SAVE THESE CREDENTIALS NOW! ⚠️\n\n")
+                f.write("These credentials are randomly generated for maximum security.\n")
+                f.write("They will NOT be shown again. If you lose them, you'll need to\n")
+                f.write("delete the users.txt file and restart the application.\n\n")
+                f.write("-" * 70 + "\n")
+                f.write(f"USERNAME: {username}\n")
+                f.write(f"PASSWORD: {password}\n")
+                f.write("-" * 70 + "\n\n")
+                f.write("📝 Write these down or save them in a password manager NOW!\n\n")
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("=" * 70 + "\n")
+            
+            logger.info(f"Welcome credentials saved to: {welcome_file}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save welcome credentials: {str(e)}")
     
     def _save_users(self):
         """Save users to file"""
