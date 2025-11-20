@@ -2,12 +2,12 @@ name: SAST Security Scan
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, carlos ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, carlos ]
 
 jobs:
-  # Semgrep: analisis multi lenguaje
+  # Semgrep: analisis multi-lenguaje
   semgrep-scan:
     name: Semgrep Security Scan
     runs-on: ubuntu-latest
