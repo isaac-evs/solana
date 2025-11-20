@@ -2,9 +2,9 @@ name: DAST Security Scan
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, carlos ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, carlos ]
 
 jobs:
   # OWASP ZAP: Escaneo de seguridad web
