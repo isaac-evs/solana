@@ -2,9 +2,9 @@ name: SAST Security Scan
 
 on:
   push:
-    branches: [ main, carlos ]
+    branches: [ '**' ]
   pull_request:
-    branches: [ main, carlos ]
+    branches: [ '**' ]
 
 jobs:
   # Semgrep: analisis multi-lenguaje
