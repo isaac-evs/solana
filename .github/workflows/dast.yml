@@ -1,0 +1,113 @@
+name: DAST Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # OWASP ZAP: Escaneo de seguridad web
+  zap-scan:
+    name: OWASP ZAP Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+
+    - name: Start Flask Backend
+      run: |
+        source venv/bin/activate
+        nohup python backend/api_server.py > backend.log 2>&1 &
+        echo $! > backend.pid
+
+    - name: Wait for backend to start
+      run: |
+        for i in {1..30}; do
+          if curl -s http://127.0.0.1:8765 > /dev/null 2>&1; then
+            echo "Backend is ready!"
+            break
+          fi
+          echo "Waiting for backend... ($i/30)"
+          sleep 2
+        done
+
+    - name: Run OWASP ZAP Scan
+      uses: zaproxy/action-baseline@v0.12.0
+      with:
+        target: 'http://127.0.0.1:8765'
+        cmd_options: '-a'
+        fail_action: false
+
+    - name: Stop backend
+      if: always()
+      run: |
+        if [ -f backend.pid ]; then
+          kill $(cat backend.pid) || true
+        fi
+
+    - name: Upload ZAP Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: zap-scan-report
+        path: |
+          report_html.html
+          report_json.json
+          report_md.md
+
+  # API Security Testing
+  api-security-test:
+    name: API Security Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies and start backend
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install -r requirements.txt
+        nohup python backend/api_server.py > backend.log 2>&1 &
+        sleep 10
+
+    - name: Test Security Headers
+      run: |
+        echo "=== Security Headers Test ===" > api-test-report.txt
+        curl -I http://127.0.0.1:8765 >> api-test-report.txt 2>&1 || true
+        
+        echo -e "\n=== CORS Test ===" >> api-test-report.txt
+        curl -H "Origin: http://evil.com" \
+             -H "Access-Control-Request-Method: POST" \
+             -X OPTIONS http://127.0.0.1:8765 -v \
+             >> api-test-report.txt 2>&1 || true
+        
+        echo -e "\n=== Authentication Test ===" >> api-test-report.txt
+        curl -X POST http://127.0.0.1:8765/api/upload \
+             >> api-test-report.txt 2>&1 || true
+
+    - name: Upload API Test Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: api-security-report
+        path: api-test-report.txt
