@@ -1,0 +1,276 @@
+name: DAST Security Scan
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  # OWASP ZAP: escaneo de seguridad web
+  zap-scan:
+    name: OWASP ZAP Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Create virtual environment and install dependencies
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create necessary directories
+      run: |
+        mkdir -p ~/.ipfs
+        mkdir -p ~/.ipfs-solana-manager
+        echo '{"API": {"HTTPHeaders": {}}}' > ~/.ipfs/config
+
+    - name: Start Flask Backend
+      run: |
+        source venv/bin/activate
+        export FLASK_ENV=development
+        export PYTHONUNBUFFERED=1
+        nohup python backend/api_server.py > backend.log 2>&1 &
+        echo $! > backend.pid
+        echo "Backend started with PID: $(cat backend.pid)"
+
+    - name: Wait for backend to be ready
+      run: |
+        echo "Waiting for backend to start..."
+        max_attempts=60
+        attempt=0
+        
+        while [ $attempt -lt $max_attempts ]; do
+          attempt=$((attempt + 1))
+          
+          if curl -s http://127.0.0.1:8765/health > /dev/null 2>&1; then
+            echo "✓ Backend is responding!"
+            echo "=== Health Check Response ==="
+            curl -s http://127.0.0.1:8765/health | python -m json.tool || true
+            break
+          fi
+          
+          echo "Attempt $attempt/$max_attempts: Waiting..."
+          sleep 3
+          
+          # Show last 10 lines of log every 10 attempts
+          if [ $((attempt % 10)) -eq 0 ]; then
+            echo "=== Recent backend logs ==="
+            tail -10 backend.log 2>/dev/null || echo "No logs yet"
+          fi
+        done
+        
+        if [ $attempt -eq $max_attempts ]; then
+          echo "Backend failed to start"
+          echo "=== Full backend log ==="
+          cat backend.log 2>/dev/null || echo "No log file found"
+          exit 1
+        fi
+
+    - name: Test backend endpoints
+      run: |
+        echo "=== Testing Backend Endpoints ==="
+        
+        echo -e "\n1. Health Check:"
+        curl -v http://127.0.0.1:8765/health 2>&1 || true
+        
+        echo -e "\n2. First Time Check:"
+        curl -v http://127.0.0.1:8765/auth/first-time-check 2>&1 || true
+        
+        echo -e "\n3. Config Save Dir:"
+        curl -v http://127.0.0.1:8765/config/save-dir 2>&1 || true
+
+    - name: Run OWASP ZAP Scan
+      uses: zaproxy/action-baseline@v0.12.0
+      with:
+        target: 'http://127.0.0.1:8765'
+        rules_file_name: ''
+        cmd_options: '-a -j -T 30 -I'
+        fail_action: false
+        allow_issue_writing: false
+      continue-on-error: true
+
+    - name: Show backend logs
+      if: always()
+      run: |
+        echo "=== Backend Logs ==="
+        cat backend.log 2>/dev/null || echo "No log file"
+
+    - name: Stop backend
+      if: always()
+      run: |
+        if [ -f backend.pid ]; then
+          kill $(cat backend.pid) 2>/dev/null || true
+          echo "Backend stopped"
+        fi
+
+    - name: Upload ZAP Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: zap-scan-report
+        path: |
+          report_html.html
+          report_json.json
+          report_md.md
+        if-no-files-found: warn
+
+  # API Security Testing
+  api-security-test:
+    name: API Security Testing
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies and start backend
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
+        
+        mkdir -p ~/.ipfs-solana-manager
+        
+        export FLASK_ENV=development
+        export PYTHONUNBUFFERED=1
+        nohup python backend/api_server.py > backend.log 2>&1 &
+        
+        # Wait for backend
+        for i in {1..30}; do
+          if curl -s http://127.0.0.1:8765/health > /dev/null 2>&1; then
+            echo "Backend ready!"
+            break
+          fi
+          echo "Waiting... ($i/30)"
+          sleep 2
+        done
+
+    - name: Test Security Headers
+      run: |
+        echo "# API Security Test Report" > api-test-report.md
+        echo "" >> api-test-report.md
+        echo "Generated: $(date)" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "## 1. Health Check Response" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -s http://127.0.0.1:8765/health | python -m json.tool >> api-test-report.md 2>&1 || echo "Failed" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "## 2. Security Headers" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -I http://127.0.0.1:8765/health >> api-test-report.md 2>&1
+        echo "\`\`\`" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "## 3. CORS Configuration Test" >> api-test-report.md
+        echo "### Test 1: Malicious origin" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -H "Origin: http://evil.com" \
+             -H "Access-Control-Request-Method: POST" \
+             -H "Access-Control-Request-Headers: Content-Type" \
+             -I -X OPTIONS http://127.0.0.1:8765/auth/login \
+             >> api-test-report.md 2>&1 || true
+        echo "\`\`\`" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "### Test 2: Allowed origin (localhost)" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -H "Origin: http://localhost:3000" \
+             -H "Access-Control-Request-Method: POST" \
+             -H "Access-Control-Request-Headers: Content-Type" \
+             -I -X OPTIONS http://127.0.0.1:8765/auth/login \
+             >> api-test-report.md 2>&1 || true
+        echo "\`\`\`" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "## 4. Authentication Tests" >> api-test-report.md
+        echo "### Test 1: Access protected endpoint without auth" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -X POST http://127.0.0.1:8765/ipfs/upload \
+             -H "Content-Type: application/json" \
+             -d '{"file_path":"/etc/passwd"}' \
+             >> api-test-report.md 2>&1 || true
+        echo "\`\`\`" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "### Test 2: Login with invalid credentials" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -X POST http://127.0.0.1:8765/auth/login \
+             -H "Content-Type: application/json" \
+             -d '{"username":"admin","password":"admin"}' \
+             >> api-test-report.md 2>&1 || true
+        echo "\`\`\`" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "## 5. Input Validation Tests" >> api-test-report.md
+        echo "### Test 1: SQL Injection attempt" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -X POST http://127.0.0.1:8765/auth/login \
+             -H "Content-Type: application/json" \
+             -d '{"username":"admin'\'' OR 1=1--","password":"anything"}' \
+             >> api-test-report.md 2>&1 || true
+        echo "\`\`\`" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        echo "### Test 2: Path traversal attempt" >> api-test-report.md
+        echo "\`\`\`" >> api-test-report.md
+        curl -X POST http://127.0.0.1:8765/ipfs/gateway-url \
+             -H "Content-Type: application/json" \
+             -d '{"cid":"../../etc/passwd"}' \
+             >> api-test-report.md 2>&1 || true
+        echo "\`\`\`" >> api-test-report.md
+        
+        echo "" >> api-test-report.md
+        echo "---" >> api-test-report.md
+        echo "Report completed at $(date)" >> api-test-report.md
+
+    - name: Analyze results
+      run: |
+        echo -e "\n=== Security Analysis Summary ===" >> api-test-report.md
+        echo "" >> api-test-report.md
+        
+        # Check for common security issues
+        if grep -q "X-Frame-Options" api-test-report.md; then
+          echo "X-Frame-Options header present" >> api-test-report.md
+        else
+          echo "X-Frame-Options header missing" >> api-test-report.md
+        fi
+        
+        if grep -q "X-Content-Type-Options" api-test-report.md; then
+          echo "X-Content-Type-Options header present" >> api-test-report.md
+        else
+          echo "X-Content-Type-Options header missing" >> api-test-report.md
+        fi
+        
+        if grep -q "Authentication required" api-test-report.md; then
+          echo "Authentication is enforced" >> api-test-report.md
+        else
+          echo "Authentication might not be enforced" >> api-test-report.md
+        fi
+        
+        cat api-test-report.md
+
+    - name: Upload API Test Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: api-security-report
+        path: api-test-report.md
